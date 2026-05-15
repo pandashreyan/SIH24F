@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+        #results { margin-top: 20px; white-space: pre-wrap; font-family: monospace; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; height: 500px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <h1>API Test Dashboard</h1>
+    <div>
+        <h3>Flask Server (Port 5000)</h3>
+        <button onclick="testHealth()">GET /health</button>
+        <button onclick="testChat()">POST /chat</button>
+        <button onclick="testGenerate()">POST /generate</button>
+    </div>
+    <div>
+        <h3>Spring Boot Server (Port 8080)</h3>
+        <button onclick="testRegister()">POST /api/users (Register)</button>
+        <button onclick="testLogin()">POST /api/login (Login)</button>
+        <button onclick="testSentiment()">POST /api/sentiment</button>
+        <button onclick="testResponses()">POST /api/responses</button>
+    </div>
+    
+    <h2>Results:</h2>
+    <div id="results">Waiting to run tests...</div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        function log(msg) {
+            resultsDiv.innerHTML += msg + '\n';
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function fetchTest(name, url, options) {
+            log(`[${name}] Starting test...`);
+            try {
+                const res = await fetch(url, options);
+                const text = await res.text();
+                log(`[${name}] Status: ${res.status}`);
+                try {
+                    const json = JSON.parse(text);
+                    log(`[${name}] Response: ${JSON.stringify(json, null, 2)}`);
+                } catch(e) {
+                    log(`[${name}] Response (Text): ${text}`);
+                }
+            } catch (err) {
+                log(`[${name}] Error: ${err.message}`);
+            }
+            log('-----------------------------------');
+        }
+
+        async function testHealth() {
+            await fetchTest('GET /health', 'http://localhost:5000/health', { method: 'GET' });
+        }
+
+        async function testChat() {
+            await fetchTest('POST /chat', 'http://localhost:5000/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'What is the constitution?' })
+            });
+        }
+
+        async function testGenerate() {
+            await fetchTest('POST /generate', 'http://localhost:5000/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input: 'Explain Kesavananda Bharati case.' })
+            });
+        }
+
+        async function testRegister() {
+            const rnum = Math.floor(Math.random() * 10000);
+            await fetchTest('POST /api/users', 'http://localhost:8080/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: `testuser${rnum}`, email: `test${rnum}@example.com`, password: 'password123' })
+            });
+        }
+
+        async function testLogin() {
+            // First we ensure a user exists
+            const rnum = Math.floor(Math.random() * 10000);
+            const user = { username: `testlogin${rnum}`, email: `login${rnum}@example.com`, password: 'password123' };
+            await fetch('http://localhost:8080/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            });
+
+            await fetchTest('POST /api/login', 'http://localhost:8080/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user.username, password: user.password })
+            });
+        }
+
+        async function testSentiment() {
+            await fetchTest('POST /api/sentiment', 'http://localhost:8080/api/sentiment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'I am extremely happy and excited about this new feature!' })
+            });
+        }
+
+        async function testResponses() {
+            await fetchTest('POST /api/responses', 'http://localhost:8080/api/responses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userInput: 'What is my right?', response: 'Part1#Part2#Part3#Part4' })
+            });
+        }
+
+        async function runAll() {
+            clearLog();
+            log('=== RUNNING ALL TESTS ===\n');
+            await testHealth();
+            await testRegister();
+            await testLogin();
+            await testSentiment();
+            await testResponses();
+            // Run Flask LLM endpoints last because they might take longer
+            await testChat();
+            await testGenerate();
+            log('=== ALL TESTS COMPLETE ===');
+            document.getElementById('done').style.display = 'block';
+        }
+    </script>
+    <button id="runAllBtn" style="background-color: blue; color: white; font-weight: bold;" onclick="runAll()">RUN ALL TESTS</button>
+    <div id="done" style="display: none; color: green; font-weight: bold; margin-top: 10px;">ALL_TESTS_COMPLETED</div>
+</body>
+</html>
