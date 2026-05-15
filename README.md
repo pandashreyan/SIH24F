@@ -81,6 +81,24 @@ npx react-native run-android
 
 ---
 
+## 📱 Real-Device Demo (Crucial!)
+To run this app on a **physical Android device** during the demo, you must map the laptop's ports to the phone. Plug in your phone via USB and run:
+```bash
+adb reverse tcp:8080 tcp:8080
+adb reverse tcp:5000 tcp:5000
+```
+*This ensures the mobile app can reach the Spring Boot (8080) and Flask AI (5000) servers.*
+
+---
+
+## 🗺️ Future Roadmap
+*   **Expansion**: Support for all 22 scheduled languages of India.
+*   **Legal Aid**: Integration with Pro Bono lawyer directories for direct consultation.
+*   **Voice-First**: Full hands-free navigation for visually impaired users.
+*   **Blockchain**: Immutable storage for generated legal documents and RTI filings.
+
+---
+
 ## 📂 Project Structure
 *   `src/`: Main React Native application source.
 *   `android/`: Native Android project configuration.
